@@ -1,4 +1,6 @@
 // var mymap = L.map('mapid').setView([22.8, 120], 8);
+$.LoadingOverlay('show');
+
 var mymap = L.map('mapid', {
 	center: [25, 121.6],
 	zoom: 9
@@ -9,50 +11,83 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 	maxZoom: 18,
 }).addTo(mymap);
 
-const importantXML = new XMLHttpRequest();
-importantXML.onload = function (e) {
-	const importantData = JSON.parse(importantXML.response); // 口罩剩餘數量資料
-
-	var oReq = new XMLHttpRequest();
-	let store = [];
-	oReq.onload = function (e) {
-		store = JSON.parse(oReq.response);
-
-		const cityData = new XMLHttpRequest();
-		let selcetedData = [];
-
-		cityData.onload = function (e) {
-			const city = JSON.parse(cityData.response).data;
-			const citySelect = document.getElementById('city');
-			const cityArray = city.map(item => item.city);
-			const notRepeatCity = cityArray.filter(function (element, index, arr) {
-				return arr.indexOf(element) === index;
-			});
-			let str = '';
-			notRepeatCity.forEach(item => {
-				str += `<option>${item}</option>`
-			});
-			citySelect.innerHTML = str;
-			// 監聽縣市 select
-			citySelect.addEventListener('change', function () {
-				selcetedData = [];
-				const citySelectValue = document.getElementById('city').value;
-				findStore(store, importantData, citySelectValue);
-				findDistrict(city, citySelectValue);
-			})
-			findStore(store, importantData, citySelect.options[0].value);
-			findDistrict(city, citySelect.options[0].value);
+function csvJSON(csv){
+  const lines = csv.split("\n");
+  const result = [];
+  const headers = lines[0].split(",");
+  for(let i = 1;i < lines.length; i++) {
+		const obj = {};
+		const currentline = lines[i].split(",");
+		for(let j=0; j < headers.length; j++){
+			obj[headers[j]] = currentline[j];
 		}
-		cityData.open("GET", './latlng.json');
-		cityData.send();
-	}
-	oReq.open("GET", './med-store.json');
-	oReq.send();
+		result.push(obj);
+  }
+  //return result; //JavaScript object
+  return JSON.stringify(result); //JSON
 }
-importantXML.open("GET", './maskmock.json');
-importantXML.send();
+function getCSV(path) {
+	return new Promise((resolve, reject) => {
+		const oReq = new XMLHttpRequest();
+		oReq.onload = function (e) {
+			const data = JSON.parse(csvJSON(oReq.response));
+			resolve(data);
+		};
+		oReq.open("GET", path);
+		oReq.send();
+	});
+}
+function getXML(path) {
+	return new Promise((resolve, reject) => {
+		const oReq = new XMLHttpRequest();
+		oReq.onload = function (e) {
+			const data = JSON.parse(oReq.response);
+			resolve(data);
+		};
+		oReq.open("GET", path);
+		oReq.send();
+	});
+}
 
-function findDistrict(city, value) {
+const maskXML = getCSV('https://cors-anywhere.herokuapp.com/http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv');
+const storeXML = getXML('./med-store.json');
+const cityXML = getXML('./latlng.json');
+
+Promise.all([maskXML, storeXML, cityXML]).then(resultData => {
+  const maskData = resultData[0];
+	const storeData = resultData[1];
+	const cityData = resultData[2];
+
+	$.LoadingOverlay('hide');
+
+	createCitySelect(cityData);
+	const citySelect = document.getElementById('city');
+	findStore(storeData, maskData, citySelect.options[0].value);
+	findDistrict(storeData, cityData, maskData, citySelect.options[0].value);
+
+	// 監聽縣市 select
+	citySelect.addEventListener('change', function () {
+		selcetedData = [];
+		const citySelectValue = document.getElementById('city').value;
+		findStore(storeData, maskData, citySelectValue);
+		findDistrict(storeData, cityData, maskData, citySelectValue);
+	})
+});
+
+function createCitySelect(city) { // 建立縣市 select
+	const citySelect = document.getElementById('city');
+	const cityArray = city.map(item => item.city);
+	const notRepeatCity = cityArray.filter(function (element, index, arr) {
+		return arr.indexOf(element) === index;
+	});
+	let str = '';
+	notRepeatCity.forEach(item => {
+		str += `<option>${item}</option>`
+	});
+	citySelect.innerHTML = str;
+}
+
+function findDistrict(store, city, mask, value) {
 	const districtSelect = document.getElementById('district');
 	let substr = '<option value="all">選擇鄉鎮市區</option>';
 	city.forEach(item => {
@@ -61,40 +96,44 @@ function findDistrict(city, value) {
 		}
 	})
 	districtSelect.innerHTML = substr;
+
+	// 鄉鎮市區 select 監聽
 	districtSelect.addEventListener('change', function () {
 		getFeaturesInView();
 		const districtValue = document.getElementById('district').value;
 		if (districtValue == 'all') {
 			const cityValue = document.getElementById('city').value;
-			findStore(store, cityValue);
+			findStore(store, mask, cityValue);
 		} else {
 			findDistrictStore(districtValue);
 		}
 	});
 }
-function findStore(store, importantData, value) {
+
+function findStore(store, mask, value) {
 	const storePosition = document.getElementById('storePosition');
 	let storeStr = '';
 	selcetedData = [];
 	store.forEach(item => {
 		if (item['address'].includes(value)) {
 			selcetedData.push(item);
-			importantData.forEach(ele => {
+			mask.forEach(ele => {
 				if (item['id'] == ele['醫事機構代碼']) {
 					item.adultMask = ele['成人口罩總剩餘數'];
 					item.childMask = ele['兒童口罩剩餘數'];
 				}
 			})
 			storeStr += `[${item['name']}] <br>
-			口罩剩餘：<strong>成人 - ${item['adultMask']} 個/ 兒童 - ${item['childMask']} 個</strong><br>
-		地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-		電話: ${item['tel']}<br><hr>`
+			口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+			電話: ${item['tel']}<br><hr>`
 		}
 	})
 	storePosition.innerHTML = storeStr;
 	document.getElementById('total').innerHTML = `總共有 ${selcetedData.length} 家`;
 }
-function getFeaturesInView() {
+
+function getFeaturesInView() { // 移除地圖上的 marker
 	mymap.eachLayer(function (layer) {
 		if (layer instanceof L.Marker) {
 			mymap.removeLayer(layer);
@@ -102,40 +141,38 @@ function getFeaturesInView() {
 	});
 }
 
+function addMapMarker(y, x, item) {
+	L.marker([y, x]).addTo(mymap).bindPopup(`[${item['name']}] <br>
+		口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+	地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+	電話: ${item['tel']}<br>`);
+}
+
 function findDistrictStore(value) {
 	let storeStr = '';
 	let selcetedDataList = []; // 用於計算篩選鄉鎮市後的數量
-	selcetedData.forEach(item => {
+	selcetedData.forEach((item, index)=> {
 		if (item['address'].includes(value)) {
 			selcetedDataList.push(item);
 			storeStr += `[${item['name']}] <br>
-			口罩剩餘：<strong>成人 - ${item['adultMask']} 個/ 兒童 - ${item['childMask']} 個</strong><br>
-		地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-		電話: ${item['tel']}<br><hr>`;
-			if (typeof item.x == 'string') {
+			口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+			電話: ${item['tel']}<br><hr>`;
+			if (item.x && typeof item.x == 'string') {
 				const x = item.x.split('\n')[0]
 				const y = item.y.split('\n')[0]
-				L.marker([y, x]).addTo(mymap).bindPopup(`[${item['name']}] <br>
-				口罩剩餘：<strong>成人 - ${item['adultMask']} 個/ 兒童 - ${item['childMask']} 個</strong><br>
-			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-			電話: ${item['tel']}<br>`);
+				addMapMarker(y, x, item);
+				if (index == 0) {
+					mymap.panTo(new L.LatLng(y, x));
+				}
 			} else {
-				L.marker([item.y, item.x]).addTo(mymap).bindPopup(`[${item['name']}] <br>
-				口罩剩餘：<strong>成人 - ${item['adultMask']} 個/ 兒童 - ${item['childMask']} 個</strong><br>
-			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-			電話: ${item['tel']}<br>`);;
+				addMapMarker(item.y, item.x, item);
+				if (index == 0) {
+					mymap.panTo(new L.LatLng(item.y, item.x));
+				}
 			}
 		}
 	})
 	storePosition.innerHTML = storeStr;
 	document.getElementById('total').innerHTML = `總共有 ${selcetedDataList.length} 家`;
-	const centerData = selcetedData[0];
-	if (centerData.x && typeof centerData.x == 'string') {
-		const x = centerData.x.split('\n')[0]
-		const y = centerData.y.split('\n')[0]
-		mymap.panTo(new L.LatLng(y, x));
-	} else {
-		mymap.panTo(new L.LatLng(centerData.y, centerData.x));
-	}
 }
-// https://api.opencube.tw/twzipcode
