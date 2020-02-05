@@ -151,7 +151,7 @@ function addMapMarker(y, x, item) {
 function findDistrictStore(value) {
 	let storeStr = '';
 	let selcetedDataList = []; // 用於計算篩選鄉鎮市後的數量
-	selcetedData.forEach((item, index)=> {
+	selcetedData.forEach((item)=> {
 		if (item['address'].includes(value)) {
 			selcetedDataList.push(item);
 			storeStr += `[${item['name']}] <br>
@@ -162,17 +162,19 @@ function findDistrictStore(value) {
 				const x = item.x.split('\n')[0]
 				const y = item.y.split('\n')[0]
 				addMapMarker(y, x, item);
-				if (index == 0) {
-					mymap.panTo(new L.LatLng(y, x));
-				}
 			} else {
 				addMapMarker(item.y, item.x, item);
-				if (index == 0) {
-					mymap.panTo(new L.LatLng(item.y, item.x));
-				}
 			}
 		}
 	})
 	storePosition.innerHTML = storeStr;
 	document.getElementById('total').innerHTML = `總共有 ${selcetedDataList.length} 家`;
+	const centerData = selcetedData[0];
+	if (centerData.x && typeof centerData.x == 'string') {
+		const x = centerData.x.split('\n')[0]
+		const y = centerData.y.split('\n')[0]
+		mymap.panTo(new L.LatLng(y, x));
+	} else {
+		mymap.panTo(new L.LatLng(centerData.y, centerData.x));
+	}
 }
