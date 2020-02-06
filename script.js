@@ -71,6 +71,26 @@ Promise.all([maskXML, storeXML, cityXML]).then(resultData => {
 		const citySelectValue = document.getElementById('city').value;
 		findStore(storeData, maskData, citySelectValue);
 		findDistrict(storeData, cityData, maskData, citySelectValue);
+	});
+	// 監聽 search 按鈕
+	const searchBtn = document.getElementById('searchBtn');
+	searchBtn.addEventListener('click', function() {
+		getFeaturesInView();
+		const cityBackData = findStore(storeData, maskData, citySelect.value);
+		const searchValue = document.getElementById('searchText').value;
+		let storeStr = '';
+		let storeArr = [];
+		cityBackData.forEach(item => {
+			if (item['address'].includes(searchValue) || item['name'].includes(searchValue)) {
+				storeStr += renderToPageTemplate(item);
+				storeArr.push(item);
+			}
+		});
+		storePosition.innerHTML = storeStr;
+		document.getElementById('total').innerHTML = `有取得口罩數量的有 ${storeArr.length} 家`;
+		if (cityBackData.length > 0) {
+			centerMarker(cityBackData[0])
+		}
 	})
 });
 
@@ -100,6 +120,7 @@ function findDistrict(store, city, mask, value) {
 	// 鄉鎮市區 select 監聽
 	districtSelect.addEventListener('change', function () {
 		getFeaturesInView();
+		document.getElementById('searchText').value = '';
 		const districtValue = document.getElementById('district').value;
 		if (districtValue == 'all') {
 			const cityValue = document.getElementById('city').value;
@@ -126,15 +147,16 @@ function findStore(store, mask, value) {
 			if (item['adultMask']) {
 				selcetedData.push(item);
 				storeStr += `[${item['name']}] <br>
-				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
-				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-				電話: ${item['tel']}<br>
-				<small>最後更新時間: ${item['updateTime']}</small><hr>`
+	口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+	地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+	電話: ${item['tel']}<br>
+	<small>最後更新時間: ${item['updateTime']}</small><hr>`;
 			}
 		}
 	})
 	storePosition.innerHTML = storeStr;
 	document.getElementById('total').innerHTML = `有取得口罩數量的有 ${selcetedData.length} 家`;
+	return selcetedData;
 }
 
 function getFeaturesInView() { // 移除地圖上的 marker
@@ -160,24 +182,31 @@ function findDistrictStore(value) {
 		if (item['address'].includes(value)) {
 			if (item['adultMask']) {
 				selcetedDataList.push(item);
-				storeStr += `[${item['name']}] <br>
-				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
-				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-				電話: ${item['tel']}<br>
-				<small>最後更新時間: ${item['updateTime']}</small><hr>`;
-			}
-			if (item.x && typeof item.x == 'string') {
-				const x = item.x.split('\n')[0]
-				const y = item.y.split('\n')[0]
-				addMapMarker(y, x, item);
-			} else {
-				addMapMarker(item.y, item.x, item);
+				storeStr += renderToPageTemplate(item);
 			}
 		}
 	})
 	storePosition.innerHTML = storeStr;
 	document.getElementById('total').innerHTML = `有取得口罩數量的有 ${selcetedDataList.length} 家`;
-	const centerData = selcetedData[0];
+	centerMarker(selcetedData[0]);
+}
+
+function renderToPageTemplate(item) {
+	if (item.x && typeof item.x == 'string') {
+		const x = item.x.split('\n')[0]
+		const y = item.y.split('\n')[0]
+		addMapMarker(y, x, item);
+	} else {
+		addMapMarker(item.y, item.x, item);
+	}
+	return `[${item['name']}] <br>
+	口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+	地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+	電話: ${item['tel']}<br>
+	<small>最後更新時間: ${item['updateTime']}</small><hr>`;
+}
+
+function centerMarker(centerData) {
 	if (centerData.x && typeof centerData.x == 'string') {
 		const x = centerData.x.split('\n')[0]
 		const y = centerData.y.split('\n')[0]

@@ -12,6 +12,7 @@
   <title>縣市篩選找口罩</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
   <link rel='stylesheet' href='https://unpkg.com/leaflet@1.5.1/dist/leaflet.css'>
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -37,8 +38,14 @@
             </div>
           </div>
         </div>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" placeholder="輸入街道地址或是藥局名稱" id="searchText">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">搜尋</button>
+          </div>
+        </div>
+        <hr>
         <p class="mb-0" id="total"></p>
-        <small>選擇鄉鎮市後地圖上才會出現圖標哦！</small>
         <div class="row mt-3">
           <div class="col">
             <div class="storePosition" id="storePosition"></div>
@@ -49,6 +56,8 @@
         <div id="mapid"></div>
       </div>
     </div>
+    <p class="mb-0"><small><i class="fas fa-info-circle"></i> 選擇鄉鎮市 / 使用搜尋 地圖上才會出現圖標</small></p>
+    <p><small><i class="fas fa-info-circle"></i> 輸入搜尋後記得點選搜尋按鈕哦！</small></p>
   </div>
   <!-- partial -->
   <script src='https://unpkg.com/leaflet@1.5.1/dist/leaflet.js'></script>
