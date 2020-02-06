@@ -49,7 +49,7 @@ function getXML(path) {
 	});
 }
 
-const maskXML = getCSV('https://cors-anywhere.herokuapp.com/http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv');
+const maskXML = getCSV('http://us-central1-my-kk-project-3c20a.cloudfunctions.net/maskData');
 const storeXML = getXML('./med-store.json');
 const cityXML = getXML('./latlng.json');
 
