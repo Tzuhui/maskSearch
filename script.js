@@ -49,7 +49,7 @@ function getXML(path) {
 	});
 }
 
-const maskXML = getCSV('http://us-central1-my-kk-project-3c20a.cloudfunctions.net/maskData');
+const maskXML = getCSV('https://us-central1-my-kk-project-3c20a.cloudfunctions.net/maskData');
 const storeXML = getXML('./med-store.json');
 const cityXML = getXML('./latlng.json');
 
