@@ -116,21 +116,23 @@ function findStore(store, mask, value) {
 	selcetedData = [];
 	store.forEach(item => {
 		if (item['address'].includes(value)) {
-			selcetedData.push(item);
 			mask.forEach(ele => {
 				if (item['id'] == ele['醫事機構代碼']) {
 					item.adultMask = ele['成人口罩總剩餘數'];
 					item.childMask = ele['兒童口罩剩餘數'];
 				}
 			})
-			storeStr += `[${item['name']}] <br>
-			口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
-			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-			電話: ${item['tel']}<br><hr>`
+			if (item['adultMask']) {
+				selcetedData.push(item);
+				storeStr += `[${item['name']}] <br>
+				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+				電話: ${item['tel']}<br><hr>`
+			}
 		}
 	})
 	storePosition.innerHTML = storeStr;
-	document.getElementById('total').innerHTML = `總共有 ${selcetedData.length} 家`;
+	document.getElementById('total').innerHTML = `有取得口罩數量的有 ${selcetedData.length} 家`;
 }
 
 function getFeaturesInView() { // 移除地圖上的 marker
@@ -153,11 +155,13 @@ function findDistrictStore(value) {
 	let selcetedDataList = []; // 用於計算篩選鄉鎮市後的數量
 	selcetedData.forEach((item)=> {
 		if (item['address'].includes(value)) {
-			selcetedDataList.push(item);
-			storeStr += `[${item['name']}] <br>
-			口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
-			地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-			電話: ${item['tel']}<br><hr>`;
+			if (item['adultMask']) {
+				selcetedDataList.push(item);
+				storeStr += `[${item['name']}] <br>
+				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
+				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
+				電話: ${item['tel']}<br><hr>`;
+			}
 			if (item.x && typeof item.x == 'string') {
 				const x = item.x.split('\n')[0]
 				const y = item.y.split('\n')[0]
@@ -168,7 +172,7 @@ function findDistrictStore(value) {
 		}
 	})
 	storePosition.innerHTML = storeStr;
-	document.getElementById('total').innerHTML = `總共有 ${selcetedDataList.length} 家`;
+	document.getElementById('total').innerHTML = `有取得口罩數量的有 ${selcetedDataList.length} 家`;
 	const centerData = selcetedData[0];
 	if (centerData.x && typeof centerData.x == 'string') {
 		const x = centerData.x.split('\n')[0]
