@@ -120,6 +120,7 @@ function findStore(store, mask, value) {
 				if (item['id'] == ele['醫事機構代碼']) {
 					item.adultMask = ele['成人口罩總剩餘數'];
 					item.childMask = ele['兒童口罩剩餘數'];
+					item.updateTime = ele['來源資料時間\r'];
 				}
 			})
 			if (item['adultMask']) {
@@ -127,7 +128,8 @@ function findStore(store, mask, value) {
 				storeStr += `[${item['name']}] <br>
 				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
 				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-				電話: ${item['tel']}<br><hr>`
+				電話: ${item['tel']}<br>
+				<small>最後更新時間: ${item['updateTime']}</small><hr>`
 			}
 		}
 	})
@@ -147,7 +149,8 @@ function addMapMarker(y, x, item) {
 	L.marker([y, x]).addTo(mymap).bindPopup(`[${item['name']}] <br>
 		口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
 	地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-	電話: ${item['tel']}<br>`);
+	電話: ${item['tel']}<br>
+	<small>最後更新時間: ${item['updateTime']}</small>`);
 }
 
 function findDistrictStore(value) {
@@ -160,7 +163,8 @@ function findDistrictStore(value) {
 				storeStr += `[${item['name']}] <br>
 				口罩剩餘：<strong>成人 - ${item['adultMask']? item['adultMask'] + ' 個': '未取得資料'}/ 兒童 - ${item['childMask']? item['childMask'] + ' 個': '未取得資料'}</strong><br>
 				地址: <a href="https://www.google.com.tw/maps/place/${item['address']}" target="_blank">${item['address']}</a><br>
-				電話: ${item['tel']}<br><hr>`;
+				電話: ${item['tel']}<br>
+				<small>最後更新時間: ${item['updateTime']}</small><hr>`;
 			}
 			if (item.x && typeof item.x == 'string') {
 				const x = item.x.split('\n')[0]
