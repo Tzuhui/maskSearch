@@ -54,7 +54,7 @@ const storeXML = getXML('./med-store.json');
 const cityXML = getXML('./latlng.json');
 
 Promise.all([maskXML, storeXML, cityXML]).then(resultData => {
-  const maskData = resultData[0];
+	const maskData = resultData[0];
 	const storeData = resultData[1];
 	const cityData = resultData[2];
 
@@ -139,9 +139,9 @@ function findStore(store, mask, value) {
 		if (item['address'].includes(value)) {
 			mask.forEach(ele => {
 				if (item['id'] == ele['醫事機構代碼']) {
-					item.adultMask = ele['成人口罩總剩餘數'];
+					item.adultMask = ele['成人口罩剩餘數'];
 					item.childMask = ele['兒童口罩剩餘數'];
-					item.updateTime = ele['來源資料時間\r'];
+					item.updateTime = ele['來源資料時間'];
 				}
 			})
 			if (item['adultMask']) {
