@@ -105,6 +105,7 @@ var greenIcon = L.icon({
 
 function yourLocation(storeData, maskData, cityData) {
 	if ("geolocation" in navigator) {
+		console.log(position.coords.latitude, position.coords.longitude)
 		navigator.geolocation.watchPosition(function(position) {
 			let near = [];
 			cityData.forEach(ele => {
@@ -177,7 +178,7 @@ function findStore(store, mask, value) {
 				if (item['id'] == ele['醫事機構代碼']) {
 					item.adultMask = ele['成人口罩剩餘數'];
 					item.childMask = ele['兒童口罩剩餘數'];
-					item.updateTime = ele['來源資料時間'];
+					item.updateTime = ele['來源資料時間\r'];
 				}
 			})
 			if (item['adultMask']) {
