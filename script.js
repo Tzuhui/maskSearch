@@ -57,7 +57,7 @@ Promise.all([maskXML, storeXML, cityXML]).then(resultData => {
 	const maskData = resultData[0];
 	const storeData = resultData[1];
 	const cityData = resultData[2];
-
+	yourLocation(storeData, maskData, cityData);
 	$.LoadingOverlay('hide');
 
 	createCitySelect(cityData);
@@ -93,6 +93,42 @@ Promise.all([maskXML, storeXML, cityXML]).then(resultData => {
 		}
 	})
 });
+
+var greenIcon = L.icon({
+	iconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-green.png',
+	iconSize:     [38, 95], // size of the icon
+	shadowSize:   [50, 64], // size of the shadow
+	iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+	shadowAnchor: [4, 62],  // the same for the shadow
+	popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+});
+
+function yourLocation(storeData, maskData, cityData) {
+	if ("geolocation" in navigator) {
+		navigator.geolocation.watchPosition(function(position) {
+			let near = [];
+			cityData.forEach(ele => {
+				near.push({
+					district: ele.district,
+					city: ele.city,
+					near: Math.abs(ele.lat - position.coords.latitude) + Math.abs(ele.lng - position.coords.longitude),
+					nearLat: ele.lat - position.coords.latitude,
+					nearLng: ele.lng - position.coords.longitude,
+				})
+			})
+			L.marker([position.coords.latitude, position.coords.longitude], {icon: greenIcon}).addTo(mymap).bindPopup('我的位置').openPopup();
+			const count = near.sort((a, b) => Math.abs(a.near) - Math.abs(b.near));
+			document.getElementById('city').value = count[0].city;
+			findDistrict(storeData, cityData, maskData, count[0].city);
+			document.getElementById('district').value = count[0].district;
+			findStore(storeData, maskData, count[0].city);
+			findDistrictStore(count[0].district);
+		});
+	} else {
+		console.log("無法使用您的位置");
+	}
+}
+
 
 function createCitySelect(city) { // 建立縣市 select
 	const citySelect = document.getElementById('city');
@@ -210,8 +246,8 @@ function centerMarker(centerData) {
 	if (centerData.x && typeof centerData.x == 'string') {
 		const x = centerData.x.split('\n')[0]
 		const y = centerData.y.split('\n')[0]
-		mymap.panTo(new L.LatLng(y, x));
+		mymap.setView([y, x], 13);
 	} else {
-		mymap.panTo(new L.LatLng(centerData.y, centerData.x));
+		mymap.setView([centerData.y, centerData.x], 13);
 	}
 }
