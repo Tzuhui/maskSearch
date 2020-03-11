@@ -105,7 +105,6 @@ var greenIcon = L.icon({
 
 function yourLocation(storeData, maskData, cityData) {
 	if ("geolocation" in navigator) {
-		console.log(position.coords.latitude, position.coords.longitude)
 		navigator.geolocation.watchPosition(function(position) {
 			let near = [];
 			cityData.forEach(ele => {
